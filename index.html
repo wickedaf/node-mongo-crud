@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSS only -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.0/font/bootstrap-icons.css">
+<style>
+        @media only screen and (max-width: 500px) {
+            #add-product, #update-product {
+                width: 100% !important;
+            }
+        }
+</style>
+    <title>Node, Express & MongoDB</title>
+</head>
+<body>
+    <div class="container text-center">
+        <div class="row">
+            <h1 class="text-center my-3">Node, Express & MongoDB</h1>
+        </div>
+        <form action="/addProduct" method="post" id="add-product" class="row w-25 w-sm-100 mx-auto p-5 rounded bg-light">
+            <input type="text" name="name" id="name" class="form-control mb-2" placeholder="Please type Name.." required>
+            <input type="number" name="quantity"  id="quantity" class="form-control mb-2" placeholder="Please type Quantity..." required>
+            <input type="number" name="price" id="price" class="form-control mb-2" placeholder="Please type Price..." required>
+            <button type="submit" id="add-user" class="btn btn-danger">Add Product</button>
+        </form >
+
+        <div id="update-product">
+
+        </div>
+        
+
+        
+        <h2 class="text-center text-danger mt-5">
+            Products from Database
+        </h2>
+        <table class="table table-striped table-bordered mb-5">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Price</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="table-row">
+            </tbody>
+        </table>
+
+         <!-- Modal -->
+         
+    </div>
+
+
+   <script>
+       const loadAllProduct = () => {
+            fetch("/products")
+            .then(res => res.json())
+            .then(data => {
+                let rowCount = 0;
+                const tableRow = document.getElementById('table-row');
+                tableRow.innerHTML = '';
+
+                data.forEach(element => {
+                        rowCount++;
+                        const tr = document.createElement('tr');
+                        
+                        tr.innerHTML = `<tr>
+                            <th class="data" scope="row">${rowCount}</th>
+                            <td>${element.name}</td>
+                            <td>${element.quantity}</td>
+                            <td>${element.price}</td>
+                            <td>
+                                <button onclick="deleteProduct(event,'${element._id}')" class="btn btn-danger"><i class="bi bi-trash-fill"></i></button>
+                                <button onclick="loadSingleProduct('${element._id}')" class="btn btn-danger"><i class="bi bi-pencil-square"></i></button>
+                            </td>
+                        </tr>
+                        
+                        
+                        `;
+                        tableRow.appendChild(tr);
+                    });
+            })
+       }
+       loadAllProduct();
+
+       const loadSingleProduct = (id) => {
+           const addProductId = document.getElementById("add-product");
+           addProductId.classList.add("display-none");
+
+           const updateProductId = document.getElementById("update-product");
+
+           fetch(`product/${id}`)
+           .then(res => res.json())
+           .then(data => {
+                const {name, quantity, price, _id} = data;
+                console.log(data);
+                updateProductId.innerHTML =`
+                <h4> Update ${name} Information</h4>
+                <div class="row w-25 mx-auto p-5 rounded bg-light">
+                    <input type="text" name="up-name" id="up-name" class="form-control mb-2" value="${name}" required>
+                    <input type="number" name="up-qty"  id="up-qty" class="form-control mb-2" value="${quantity}" required>
+                    <input type="number" name="up-price" id="up-price" class="form-control mb-2" value="${price}" required>
+                    <button onclick="updateProduct('${_id}')" id="add-user" class="btn btn-danger">Update Product</button>
+                </div >
+                `;
+           });
+        
+       }
+
+       const updateProduct = (id) => {
+           const upName = document.getElementById("up-name").value;
+           const upQty = document.getElementById("up-qty").value;
+           const upPrice = document.getElementById("up-price").value;
+           const product = { name: upName, quantity: upQty, price: upPrice};
+
+           fetch(`/updateProduct/${id}`, {
+               method: 'PATCH',
+               headers: {'Content-Type': 'application/json'},
+               body: JSON.stringify(product)
+           })
+           .then(res => res.json())
+           .then(data => {
+               loadAllProduct();
+               document.getElementById("update-product").style.display = "none";
+               document.getElementById("add-product").style.display = "block";
+           })
+       }
+
+       const deleteProduct = (event, id) => {
+
+            fetch(`/deleteProduct/${id}`, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data){
+                    event.target.closest("tbody > tr").style.display = 'none';
+                }
+            })
+       }
+   </script>
+   <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+</body>
+</html>
